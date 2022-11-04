@@ -1,5 +1,5 @@
 # Cataphote
 
-Dynamic billiard simulation.
+Dynamical billiard simulation.
 
 ![Billiard](./figures/billiard.svg)
