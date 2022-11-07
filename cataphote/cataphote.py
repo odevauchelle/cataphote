@@ -72,25 +72,43 @@ class Ray :
 
 class cataphote :
 
-    def __init__( self, reflector ) :
-        self.set_reflector( reflector )
+    def __init__( self, reflector = None, segments = None ) :
 
-    def set_reflector( self, reflector ) :
+        self.reflector = []
+        self.segments = []
+        self.tangents = []
+        self.normals = []
 
-        self.reflector = np.array( reflector )
-        self.segments = [ Segment( self.reflector[i], self.reflector[i+1] ) for i in range( len(self.reflector)- 1 )  ]
+        self.add_reflector( reflector, segments )
 
-        dx = np.diff( self.reflector, axis = 0 )
+    def add_reflector( self, reflector = None, segments = None ) :
 
-        self.tangents = np.array( [ dx/np.sqrt( np.sum( dx**2 ) ) for dx in dx ] )
-        self.normals = np.array( [ np.array(  [ [ 0, 1], [ -1, 0 ] ] )@t for t in self.tangents ] )
+        if segments is None :
+
+            self.reflector += list( reflector )
+            new_segments = [ Segment( self.reflector[i], self.reflector[i+1] ) for i in range( len(self.reflector)- 1 )  ]
+            self.segments += new_segments
+
+        else :
+            new_segments = segments
+            self.segments += segments
+            for segment in segments :
+                self.reflector += [ np.array( [ np.nan, np.nan ] ), segment.p1, segment.p2 ]
+
+        for segment in new_segments :
+
+            dx = segment.p2 - segment.p1
+            t = dx/np.linalg.norm(dx)
+
+            self.tangents += [ t ]
+            self.normals += [ np.array([ -t[1], t[0] ]) ]
 
     def plot_reflector( self, ax = None, **kwargs ):
 
         if ax is None :
             ax = gca()
 
-        return ax.plot( *np.array( self.reflector ).T, **kwargs )
+        ax.plot( *np.array( self.reflector ).T, **kwargs )
 
     def get_intersections( self, ray ) :
 
@@ -180,6 +198,7 @@ if __name__ == '__main__' :
 
 
     c = cataphote( [ (-.5,0), (-.9,-.7), (0,-.4), (1.2,-.8), (.5,0), (-.5,0) ] )
+    c.add_reflector( segments = [ Segment( [-.1,-.2], [.1,-.2] ) ] )
 
 
     c.plot_reflector( ax = ax, color = 'k', lw = 2 )
