@@ -19,9 +19,13 @@
 
 import numpy as np
 from matplotlib.pyplot import gca
-# import sympy as sp
 
-# from shapely.geometry import LineString
+#############################
+#
+# Geometric objects
+#
+#############################
+
 
 class Segment :
 
@@ -70,30 +74,37 @@ class Ray :
             return None
 
 
+###########################
+#
+# Combination of reflectors
+#
+###########################
+
 class cataphote :
 
-    def __init__( self, reflector = None, segments = None ) :
+    def __init__( self, segments ) :
 
-        self.reflector = []
         self.segments = []
         self.tangents = []
         self.normals = []
 
-        self.add_reflector( reflector, segments )
+        self.add_reflector( segments )
 
-    def add_reflector( self, reflector = None, segments = None ) :
+    def add_reflector( self, segments ) :
 
-        if segments is None :
+        try : # segments is a single Segment object
+            segments.p1
+            new_segments = [segments]
 
-            self.reflector += list( reflector )
-            new_segments = [ Segment( self.reflector[i], self.reflector[i+1] ) for i in range( len(self.reflector)- 1 )  ]
-            self.segments += new_segments
+        except :
+            try : # segments is a list of Segment objects
+                segments[0].p1
+                new_segments = segments
 
-        else :
-            new_segments = segments
-            self.segments += segments
-            for segment in segments :
-                self.reflector += [ np.array( [ np.nan, np.nan ] ), segment.p1, segment.p2 ]
+            except : # segments is a list of points
+                new_segments = [ Segment( segments[i], segments[i+1] ) for i in range( len(segments)- 1 )  ]
+
+        self.segments += new_segments
 
         for segment in new_segments :
 
@@ -103,12 +114,21 @@ class cataphote :
             self.tangents += [ t ]
             self.normals += [ np.array([ -t[1], t[0] ]) ]
 
+    def get_reflector_points(self) :
+
+        reflector = []
+
+        for segment in self.segments :
+                reflector += [ np.array( [ np.nan, np.nan ] ), segment.p1, segment.p2 ]
+
+        return reflector
+
     def plot_reflector( self, ax = None, **kwargs ):
 
         if ax is None :
             ax = gca()
 
-        ax.plot( *np.array( self.reflector ).T, **kwargs )
+        ax.plot( *np.array( self.get_reflector_points() ).T, **kwargs )
 
     def get_intersections( self, ray ) :
 
